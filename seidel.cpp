@@ -1,10 +1,3 @@
-//
-//  main.cpp
-//  Benchmark
-//
-//  Created by Rob Lloyd on 5/24/16.
-//
-
 #include <iostream>
 #include <time.h>
 #include <vector>
@@ -26,16 +19,16 @@ int main() {
     double error = 1;
     double errorCap = pow(10, -13);
     
-    
-    //Jacobi
-    fout.open("jacobiData.txt");
-    foutIter.open("jacobiIter.txt");
-    foutTotalWallTime.open("jacobiTotalWallTime.txt");
-    foutIterWallTime.open("jacobiIterWallTime.txt");
+    //cout << grid << endl;
+
+    //Gauss-Seidel
+    fout.open("seidelData.txt");
+    foutIter.open("seidelIter.txt");
+    foutTotalWallTime.open("seidelTotalWallTime.txt");
+    foutIterWallTime.open("seidelIterWallTime.txt");
     
     MatrixXd grid = MatrixXd::Constant(N+2,N+2,0);
     MatrixXd oldGrid = MatrixXd::Constant(N+2,N+2,0);
-    
     
     for(;N<=100;N+=10){
         
@@ -60,7 +53,7 @@ int main() {
             error = 0;
             for(int i = 1; i < N+1; i++){
                 for(int j = 1; j < N+1; j++){
-                    grid(i,j) = 0.25*(oldGrid(i+1,j)+oldGrid(i-1,j)+oldGrid(i,j+1)+oldGrid(i,j-1));
+                    grid(i,j) = 0.25*(grid(i+1,j)+grid(i-1,j)+grid(i,j+1)+grid(i,j-1));
                     error += (grid(i,j)-oldGrid(i,j))*(grid(i,j)-oldGrid(i,j));
                     numIter++;
                 }
@@ -68,13 +61,13 @@ int main() {
             oldGrid = grid;
             error = sqrt(error/(N*N));
         }
-    
+        
         end = clock();
         time = double(end-start)/ (double)CLOCKS_PER_SEC;
         foutTotalWallTime << N << " " << time << endl;
         foutIterWallTime << N << " " << (double)time/(double)numIter << endl;
         foutIter << N << " " << numIter << endl;
-        //cout << N << endl;
+        cout << N << endl;
     }
     N -= 10;
     //fout << grid;
@@ -91,7 +84,7 @@ int main() {
     foutTotalWallTime.close();
     foutIterWallTime.close();
     
-    system("python graph.py");
+    system("python graphSeidel.py");
     
     return 0;
 }

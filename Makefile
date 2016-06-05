@@ -1,9 +1,11 @@
 
+file = main
+
 all:
-	g++ -std=c++11 -I /usr/local/include/eigen3 main.cpp -o main.exec
+	g++ -std=c++11 -I /usr/local/include/eigen3 ${file}.cpp -o ${file}.exec
 
 clean:
-	rm main.exec 
+	rm ${file}.exec 
 
 run:
-	./main.exec
+	./${file}.exec

@@ -1,10 +1,3 @@
-//
-//  main.cpp
-//  Benchmark
-//
-//  Created by Rob Lloyd on 5/24/16.
-//
-
 #include <iostream>
 #include <time.h>
 #include <vector>
@@ -17,27 +10,30 @@ using Eigen::MatrixXd;
 
 int main() {
     
-    ofstream fout, foutIter, foutTotalWallTime, foutIterWallTime;
+    ofstream fout, foutIter, foutTotalWallTime, foutIterWallTime, foutOmega;
     clock_t start, end;
     
     double time;
     int numIter = 0;
-    int N = 100;
+    int N = 50;
+    double omega = 0.1;
     double error = 1;
     double errorCap = pow(10, -13);
     
+    //cout << grid << endl;
+
+    //Successive Overrelaxation (SOR)
+    fout.open("sorData.txt");
+    foutIter.open("sorIter.txt");
+    foutTotalWallTime.open("sorTotalWallTime.txt");
+    foutIterWallTime.open("sorIterWallTime.txt");
     
-    //Jacobi
-    fout.open("jacobiData.txt");
-    foutIter.open("jacobiIter.txt");
-    foutTotalWallTime.open("jacobiTotalWallTime.txt");
-    foutIterWallTime.open("jacobiIterWallTime.txt");
+    foutOmega.open("omegaData.txt");
     
     MatrixXd grid = MatrixXd::Constant(N+2,N+2,0);
     MatrixXd oldGrid = MatrixXd::Constant(N+2,N+2,0);
     
-    
-    for(;N<=100;N+=10){
+    for(;N<=50;N+=10){
         
         grid.resize(N+2,N+2);
         oldGrid.resize(N+2,N+2);
@@ -53,30 +49,34 @@ int main() {
             }
         }
         
-        numIter = 0;
-        start = clock();
-        error = 1;
-        while(error > errorCap){
-            error = 0;
-            for(int i = 1; i < N+1; i++){
-                for(int j = 1; j < N+1; j++){
-                    grid(i,j) = 0.25*(oldGrid(i+1,j)+oldGrid(i-1,j)+oldGrid(i,j+1)+oldGrid(i,j-1));
-                    error += (grid(i,j)-oldGrid(i,j))*(grid(i,j)-oldGrid(i,j));
-                    numIter++;
+            start = clock();
+        for(; omega < 2; omega+=.10){ //For making the optimization of omega graph
+            numIter = 0;
+            error = 1;
+            while(error > errorCap){
+                error = 0;
+                for(int i = 1; i < N+1; i++){
+                    for(int j = 1; j < N+1; j++){
+                        grid(i,j) = (1-omega)*oldGrid(i,j) + omega*(0.25*(grid(i+1,j)+grid(i-1,j)+grid(i,j+1)+grid(i,j-1)));
+                        error += (grid(i,j)-oldGrid(i,j))*(grid(i,j)-oldGrid(i,j));
+                        numIter++;
+                    }
                 }
+                oldGrid = grid;
+                error = sqrt(error/(N*N));
             }
-            oldGrid = grid;
-            error = sqrt(error/(N*N));
+            cout << omega << " " << numIter << " done\n";
+            foutOmega << numIter << endl;
         }
-    
         end = clock();
         time = double(end-start)/ (double)CLOCKS_PER_SEC;
         foutTotalWallTime << N << " " << time << endl;
         foutIterWallTime << N << " " << (double)time/(double)numIter << endl;
         foutIter << N << " " << numIter << endl;
-        //cout << N << endl;
+        cout << N << endl;
     }
     N -= 10;
+    
     //fout << grid;
     //cout << N << endl;
     for(int i = N+1; i >= 0; i--){
@@ -91,7 +91,8 @@ int main() {
     foutTotalWallTime.close();
     foutIterWallTime.close();
     
-    system("python graph.py");
+    system("python graphSOR.py");
     
     return 0;
+
 }
